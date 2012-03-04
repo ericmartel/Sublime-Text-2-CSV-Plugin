@@ -1,0 +1,9 @@
+CSV by Eric Martel (emartel@gmail.com / www.ericmartel.com)
+
+Thank you for installing CSV. All commands are available through menus, context menus and the command palette.
+
+Please direct any feedback to emartel@gmail.com or through github at https://github.com/ericmartel/Sublime-Text-2-CSV-Plugin.
+
+Thank you for your support.
+
+Eric Martel

@@ -1,0 +1,48 @@
+[
+    {
+        "caption": "Tools",
+        "mnemonic": "t",
+        "id": "tools",
+        "children":
+        [
+            {
+                "caption": "CSV",
+                "mnemonic": "c",
+                "id": "csv",
+                "children":
+                [
+                    {
+                        "command": "csv_set_first_row_as_header",
+                        "caption": "Use First Row As Header"
+                    },
+                    {
+                        "caption": "-"
+                    },
+                    {
+                        "command": "csv_sort_asc_current_col",
+                        "caption": "Sort Current Column (Ascending)"
+                    },
+                    {
+                        "command": "csv_sort_desc_current_col",
+                        "caption": "Sort Current Column (Descending)"
+                    },
+                    {
+                        "command": "csv_sort_asc_prompt_col",
+                        "caption": "Sort Column (Ascending)"
+                    },
+                    {
+                        "command": "csv_sort_desc_prompt_col",
+                        "caption": "Sort Column (Descending)"
+                    },
+                    {
+                        "caption": "-"
+                    },
+                    {
+                        "command": "csv_format",
+                        "caption": "Format"
+                    }
+                ]
+            }
+        ]
+    }
+]

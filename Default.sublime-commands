@@ -1,0 +1,26 @@
+[
+    {
+        "command": "csv_set_first_row_as_header",
+        "caption": "CSV: Use First Row As Header"
+    },
+    {
+        "command": "csv_sort_asc_current_col",
+        "caption": "CSV: Sort Current Column (Ascending)"
+    },
+    {
+        "command": "csv_sort_desc_current_col",
+        "caption": "CSV: Sort Current Column (Descending)"
+    },
+    {
+        "command": "csv_sort_asc_prompt_col",
+        "caption": "CSV: Sort Column (Ascending)"
+    },
+    {
+        "command": "csv_sort_desc_prompt_col",
+        "caption": "CSV: Sort Column (Descending)"
+    },
+    {
+        "command": "csv_format",
+        "caption": "CSV: Format"
+    }
+]
