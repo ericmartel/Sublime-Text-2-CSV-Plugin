@@ -7,55 +7,149 @@ import threading
 import os
 import json
 
+delimiters = [',', ';']
+
 class SortDirection:
     Ascending=1
     Descending=2
 
+class CSVMatrix:
+    delimiter = ''
+    rows = []
+    header = []
+    use_header = False
+
+    def __init__(self, view):
+        self.use_header = GetFileSetting(view, 'use_header')
+        self.delimiter = ''
+        self.rows = []
+        self.header = []
+
+    def AddRow(self, row):
+        if self.use_header == True and len(self.header) == 0:
+            self.header = row
+        else:
+            self.rows.append(row)
+
+    def SortColumn(self, column, sortdirection):
+        if sortdirection == SortDirection.Ascending:
+            self.rows.sort(key=lambda row: row[column])
+        else:
+            self.rows.sort(key=lambda row: row[column], reverse=True)
+
+    def GetHeader(self):
+        if self.use_header:
+            return self.header
+        else:
+            return self.rows[0]
+
+
+# not done through regex for clarity and control
+# not done using csv module to have better control over what happens with the quotes
+def GetColumnValues(row, delimiter, trimwhitespaces):
+    columns = []
+    currentword = ''
+    insidequotes = False
+    quotescharacter = ''
+    waitingfordelimiter = False
+    for char in row:
+        skip = False
+
+        # ignore any leading whitespace
+        if trimwhitespaces and len(currentword) == 0:
+            if string.whitespace.find(char):
+                # skip it
+                skip = True
+
+        # ignore any whitespace after the closing bracket
+        if trimwhitespaces and waitingfordelimiter:
+            if string.whitespace.find(char):
+            # skip it
+                skip = True
+
+        # look for the closing quote
+        if skip == False and insidequotes:
+            if char == quotescharacter:
+                waitingfordelimiter = True
+                insidequotes = False
+                quotescharacter = ''
+                #skip = True
+
+        # look for ending quote
+        if skip == False and len(currentword) == 0 and (char == '"' or char == '\''):
+            insidequotes = True
+            quotescharacter = char
+            #skip = True
+
+        if skip == False and char == delimiter:
+            if not insidequotes:
+                skip = True
+                if trimwhitespaces:
+                    currentword = currentword.strip()
+                columns.append(currentword)
+                currentword = ''
+                waitingfordelimiter = False
+
+        if skip == False:
+            currentword += char
+
+    # add the last word
+    if trimwhitespaces:
+        currentword = currentword.strip()
+    columns.append(currentword)
+
+    return 1, columns
+
 def ValidateBuffer(view):
     # read line by line
     sample = view.substr(sublime.Region(0, view.size()))
-
-    matrix = []
+    matrix = None
     numcolumns = False
-    for line in sample.split("\n"):
-        values = line.split(",")
-        
-        # validate the number of columns
-        if numcolumns == False:
-            numcolumns = len(values)
-        else:
-            if numcolumns != len(values):
-                return False, [];
+    valid = True
+    for currentdelimiter in delimiters:
+        matrix = CSVMatrix(view)
+        matrix.delimiter = currentdelimiter
+        valid = True
+        numcolumns = False
+        for line in sample.split("\n"):
+            success, listvalues = GetColumnValues(line, currentdelimiter, 0)
 
-        # build the matrix
-        matrix.append(values)
+            # validate the number of columns
+            if numcolumns == False:
+                numcolumns = len(listvalues)
+            else:
+                if numcolumns != len(listvalues):
+                    valid = False
+                    break
 
-    return True, matrix    
+            # build the matrix
+            matrix.AddRow(listvalues)
 
-def Sort(matrix, column, sortdirection):
-    if sortdirection == SortDirection.Ascending:
-        matrix.sort(key=lambda row: row[column])
+        if valid:
+            break
+
+    if valid:
+        return True, matrix    
     else:
-        matrix.sort(key=lambda row: row[column], reverse=True)
-    return matrix
+        return False, None
 
-def BuildViewFromMatrix(header, matrix):
-    numcolumns = len(matrix[0])
-    numrows = len(matrix)
+def BuildViewFromMatrix(matrix):
+    numcolumns = len(matrix.rows[0])
+    numrows = len(matrix.rows)
     output = ''
 
-    if header:
-        for columnindex, column in enumerate(header):
+    if matrix.header:
+        for columnindex, column in enumerate(matrix.header):
             output += column
             if columnindex < (numcolumns - 1):
-                output += ','
+                output += matrix.delimiter
         output += '\n'
 
-    for rowindex, row in enumerate(matrix):
+    for rowindex, row in enumerate(matrix.rows):
         for columnindex, column in enumerate(row):
             output += column
             if columnindex < (numcolumns - 1):
-                output += ','
+                output += matrix.delimiter
         if rowindex < (numrows - 1):
             output += '\n'
     return output
@@ -73,15 +167,9 @@ def GetColumnFromCursor(view):
     return column
 
 def SortView(view, matrix, column, direction):
-    use_header = GetFileSetting(view, 'use_header')
-    header = None
-    if use_header:
-        # remove the first row and add it after
-        header = matrix.pop(0)
+    matrix.SortColumn(column, direction)
 
-    Sort(matrix, column, direction)
-
-    output = BuildViewFromMatrix(header, matrix)
+    output = BuildViewFromMatrix(matrix)
 
     edit = view.begin_edit()
     view.replace(edit, sublime.Region(0, view.size()), output)
@@ -116,10 +204,11 @@ class CsvSortAscPromptColCommand(sublime_plugin.WindowCommand):
             sublime.error_message(__name__ + ": The buffer doesn't appear to be a CSV file")
             return
 
-        self.window.show_quick_panel(self.matrix[0], self.on_select_done)
+        self.window.show_quick_panel(self.matrix.GetHeader(), self.on_select_done)
 
     def on_select_done(self, picked):
-        SortView(self.window.active_view(), self.matrix, picked, SortDirection.Ascending)
+        if picked >= 0:
+            SortView(self.window.active_view(), self.matrix, picked, SortDirection.Ascending)
 
 class CsvSortDescPromptColCommand(sublime_plugin.WindowCommand):
     def run(self):
@@ -128,10 +217,11 @@ class CsvSortDescPromptColCommand(sublime_plugin.WindowCommand):
             sublime.error_message(__name__ + ": The buffer doesn't appear to be a CSV file")
             return
 
-        self.window.show_quick_panel(self.matrix[0], self.on_select_done)
+        self.window.show_quick_panel(self.matrix.GetHeader(), self.on_select_done)
 
     def on_select_done(self, picked):
-        SortView(self.window.active_view(), self.matrix, picked, SortDirection.Descending)
+        if picked >= 0:
+            SortView(self.window.active_view(), self.matrix, picked, SortDirection.Descending)
 
 class CsvFormatCommand(sublime_plugin.WindowCommand):
     def run(self):
@@ -145,12 +235,10 @@ class CsvFormatCommand(sublime_plugin.WindowCommand):
 
     def on_done(self, input):
         use_header = GetFileSetting(self.window.active_view(), 'use_header')
-        if use_header:
-            self.matrix.pop(0)
         
         output = ''
-        numrows = len(self.matrix)
-        for rowindex, row in enumerate(self.matrix):
+        numrows = len(self.matrix.rows)
+        for rowindex, row in enumerate(self.matrix.rows):
             formatted_row = input
             for columnindex, column in enumerate(row):
                 formatted_row = formatted_row.replace('{' + str(columnindex) + '}', column)
