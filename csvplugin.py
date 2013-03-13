@@ -253,6 +253,7 @@ class CsvFormatCommand(sublime_plugin.WindowCommand):
 
         edit = view.begin_edit()
         view.insert(edit, 0, output)
+        view.end_edit(edit)
 
     def on_change(self, input):
         pass
