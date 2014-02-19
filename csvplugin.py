@@ -171,10 +171,8 @@ def SortView(view, matrix, column, direction):
 
     output = BuildViewFromMatrix(matrix)
 
-    edit = view.begin_edit()
-    view.replace(edit, sublime.Region(0, view.size()), output)
-    view.end_edit(edit)
-
+    view.run_command('csv_set_output', {'output': output});
+    
 class CsvSortAscCurrentColCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         valid, matrix = ValidateBuffer(self.view)
@@ -223,6 +221,11 @@ class CsvSortDescPromptColCommand(sublime_plugin.WindowCommand):
         if picked >= 0:
             SortView(self.window.active_view(), self.matrix, picked, SortDirection.Descending)
 
+class CsvSetOutputCommand(sublime_plugin.TextCommand):
+    def run(self, edit, **args):
+        if(args['output'] != None):
+            self.view.replace(edit, sublime.Region(0, self.view.size()), args['output']);
+
 class CsvFormatCommand(sublime_plugin.WindowCommand):
     def run(self):
         valid, self.matrix = ValidateBuffer(self.window.active_view())
@@ -251,9 +254,7 @@ class CsvFormatCommand(sublime_plugin.WindowCommand):
         view.set_name('Formatted Output')
         view.set_scratch(True)
 
-        edit = view.begin_edit()
-        view.insert(edit, 0, output)
-        view.end_edit(edit)
+        view.run_command('csv_set_output', {'output': output});
 
     def on_change(self, input):
         pass
