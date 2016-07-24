@@ -227,13 +227,14 @@ class CsvSetOutputCommand(sublime_plugin.TextCommand):
             self.view.replace(edit, sublime.Region(0, self.view.size()), args['output']);
 
 class CsvFormatCommand(sublime_plugin.WindowCommand):
+    initialFormatString = ""
     def run(self):
         valid, self.matrix = ValidateBuffer(self.window.active_view())
         if not valid:
             sublime.error_message(__name__ + ": The buffer doesn't appear to be a CSV file")
             return
 
-        self.window.show_input_panel('Format (Values as 0 based column between {})', "",
+        self.window.show_input_panel('Format (Values as 0 based column between {})', self.initialFormatString,
             self.on_done, self.on_change, self.on_cancel)
 
     def on_done(self, input):
@@ -261,6 +262,18 @@ class CsvFormatCommand(sublime_plugin.WindowCommand):
 
     def on_cancel(self):
         pass
+
+class CsvFormatWithDefaultsCommand(CsvFormatCommand):
+    def run(self):
+        valid, matrix = ValidateBuffer(self.window.active_view())
+        if valid:
+            numcolumns = len(matrix.rows[0])
+            if numcolumns > 0:
+                for x in range(0, numcolumns):
+                    self.initialFormatString += "{%d} " % x
+                self.initialFormatString = self.initialFormatString[:-1]
+
+        super(CsvFormatWithDefaultsCommand, self).run();
 
 def SetFileSetting(view, key, value):
     filename = view.file_name()

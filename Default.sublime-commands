@@ -22,5 +22,9 @@
     {
         "command": "csv_format",
         "caption": "CSV: Format"
+    },
+    {
+        "command": "csv_format_with_defaults",
+        "caption": "CSV: Format with Default Values"
     }
 ]

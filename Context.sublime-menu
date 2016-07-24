@@ -33,6 +33,10 @@
             {
                 "command": "csv_format",
                 "caption": "Format"
+            },
+            {
+                "command": "csv_format_with_defaults",
+                "caption": "Format with Default Values"
             }
         ]
     }
