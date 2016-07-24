@@ -242,10 +242,22 @@ class CsvFormatCommand(sublime_plugin.WindowCommand):
         
         output = ''
         numrows = len(self.matrix.rows)
+        columnlengths = []
+
+        # find column lengths
+        for rowindex, row in enumerate(self.matrix.rows):
+            for columnindex, column in enumerate(row):
+                columnlen = len(column)
+                if columnindex >= len(columnlengths):
+                    columnlengths.append(columnlen)
+                elif columnlengths[columnindex] < columnlen:
+                    columnlengths[columnindex] = columnlen
+
         for rowindex, row in enumerate(self.matrix.rows):
             formatted_row = input
             for columnindex, column in enumerate(row):
-                formatted_row = formatted_row.replace('{' + str(columnindex) + '}', column)
+                padded_str = column.ljust(columnlengths[columnindex], ' ')
+                formatted_row = formatted_row.replace('{' + str(columnindex) + '}', padded_str)
                 
             output += formatted_row
             if rowindex < (numrows - 1):
