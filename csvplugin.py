@@ -265,6 +265,7 @@ class CsvFormatCommand(sublime_plugin.WindowCommand):
 
 class CsvFormatWithDefaultsCommand(CsvFormatCommand):
     def run(self):
+        self.initialFormatString = ""
         valid, matrix = ValidateBuffer(self.window.active_view())
         if valid:
             numcolumns = len(matrix.rows[0])
